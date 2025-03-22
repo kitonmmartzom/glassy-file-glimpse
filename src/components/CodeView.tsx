@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Eye, Edit, Save, Copy } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ interface CodeViewProps {
   fileName: string;
   language: string;
   content: string;
+  onContentChange?: (content: string) => void;
 }
 
 const CodeView: React.FC<CodeViewProps> = ({
@@ -26,24 +27,34 @@ const CodeView: React.FC<CodeViewProps> = ({
   onTabChange,
   fileName,
   language,
-  content
+  content,
+  onContentChange
 }) => {
   const [editableContent, setEditableContent] = useState(content);
   const [editableFileName, setEditableFileName] = useState(fileName);
   const [editableLanguage, setEditableLanguage] = useState(language);
+  const preRef = useRef<HTMLPreElement>(null);
 
   useEffect(() => {
-    if (activeTab === 'view') {
-      Prism.highlightAll();
+    setEditableContent(content);
+  }, [content]);
+
+  useEffect(() => {
+    if (activeTab === 'view' && preRef.current) {
+      Prism.highlightElement(preRef.current);
     }
-  }, [activeTab, content, language]);
+  }, [activeTab, content, language, preRef]);
 
   const handleSave = () => {
-    // In a real app, we would save to the database here
-    toast({
-      title: 'Saved successfully',
-      description: `${editableFileName} has been updated`,
-    });
+    if (onContentChange) {
+      onContentChange(editableContent);
+    } else {
+      // Fallback if no change handler provided
+      toast({
+        title: 'Saved successfully',
+        description: `${editableFileName} has been updated`,
+      });
+    }
   };
 
   const copyToClipboard = () => {
@@ -65,15 +76,15 @@ const CodeView: React.FC<CodeViewProps> = ({
   };
 
   return (
-    <div className="glass-card w-full overflow-hidden animate-scale-in">
+    <div className="glass-card w-full overflow-hidden animate-scale-in shadow-xl bg-white/10 dark:bg-black/20 backdrop-blur-xl border border-white/20 dark:border-white/10">
       <Tabs value={activeTab} onValueChange={(value) => onTabChange(value as 'view' | 'edit')}>
         <div className="flex items-center justify-between p-3 border-b border-border/40">
           <TabsList>
-            <TabsTrigger value="view" className="flex items-center gap-2">
+            <TabsTrigger value="view" className="flex items-center gap-2 transition-transform hover:scale-105">
               <Eye size={16} />
               View Code
             </TabsTrigger>
-            <TabsTrigger value="edit" className="flex items-center gap-2">
+            <TabsTrigger value="edit" className="flex items-center gap-2 transition-transform hover:scale-105">
               <Edit size={16} />
               Edit Code
             </TabsTrigger>
@@ -85,7 +96,7 @@ const CodeView: React.FC<CodeViewProps> = ({
                 variant="outline" 
                 size="sm" 
                 onClick={copyToClipboard}
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 transition-transform hover:scale-105 hover:shadow-md"
               >
                 <Copy size={14} />
                 Copy
@@ -97,7 +108,7 @@ const CodeView: React.FC<CodeViewProps> = ({
                 variant="outline" 
                 size="sm" 
                 onClick={handleSave}
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 transition-transform hover:scale-105 hover:shadow-md"
               >
                 <Save size={14} />
                 Save
@@ -122,8 +133,8 @@ const CodeView: React.FC<CodeViewProps> = ({
           
           <div>
             <p className="text-sm font-medium mb-1 text-muted-foreground">Code</p>
-            <div className="glass-card overflow-hidden">
-              <pre className="line-numbers">
+            <div className="glass-card overflow-hidden shadow-inner bg-black/5 dark:bg-white/5">
+              <pre ref={preRef} className="line-numbers">
                 <code className={getLanguageClass()}>
                   {content}
                 </code>
@@ -142,7 +153,7 @@ const CodeView: React.FC<CodeViewProps> = ({
                 <input
                   id="fileName"
                   type="text"
-                  className="glass-input w-full px-3 py-2 rounded-md"
+                  className="glass-input w-full px-3 py-2 rounded-md shadow-inner bg-white/5 dark:bg-black/10 backdrop-blur-md border border-white/10"
                   placeholder="Enter file name (e.g., my-component.tsx)"
                   value={editableFileName}
                   onChange={(e) => setEditableFileName(e.target.value)}
@@ -154,7 +165,7 @@ const CodeView: React.FC<CodeViewProps> = ({
                 </label>
                 <select
                   id="language"
-                  className="glass-input w-full px-3 py-2 rounded-md appearance-none"
+                  className="glass-input w-full px-3 py-2 rounded-md appearance-none shadow-inner bg-white/5 dark:bg-black/10 backdrop-blur-md border border-white/10"
                   value={editableLanguage}
                   onChange={(e) => setEditableLanguage(e.target.value)}
                 >
@@ -172,7 +183,7 @@ const CodeView: React.FC<CodeViewProps> = ({
             </label>
             <textarea
               id="codeContent"
-              className="glass-input w-full p-4 rounded-md font-mono text-sm h-64"
+              className="glass-input w-full p-4 rounded-md font-mono text-sm h-64 shadow-inner bg-white/5 dark:bg-black/10 backdrop-blur-md border border-white/10"
               placeholder="Paste or type your code here"
               value={editableContent}
               onChange={(e) => setEditableContent(e.target.value)}
@@ -182,7 +193,7 @@ const CodeView: React.FC<CodeViewProps> = ({
             <Button 
               variant="default" 
               onClick={handleSave}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 transition-transform hover:scale-105 hover:shadow-md"
             >
               <Save size={16} />
               Save Code

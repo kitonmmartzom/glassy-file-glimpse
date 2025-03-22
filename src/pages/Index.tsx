@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -26,6 +26,13 @@ interface Project {
   updated_at: string;
 }
 
+// Memoized components for performance optimization
+const MemoizedFileExplorer = memo(FileExplorer);
+const MemoizedCodeView = memo(CodeView);
+const MemoizedComponentStructure = memo(ComponentStructure);
+const MemoizedReactPatterns = memo(ReactPatterns);
+const MemoizedRecommendations = memo(Recommendations);
+
 const Index = () => {
   const [activeTab, setActiveTab] = useState<'view' | 'edit'>('view');
   const [selectedFile, setSelectedFile] = useState<FileItem>({
@@ -37,61 +44,99 @@ const Index = () => {
   const [codeContent, setCodeContent] = useState<string>(
     'export default function Page() {\n  return (\n    <div>\n      <h1>Hello World</h1>\n    </div>\n  );\n}'
   );
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const { data: projects, isLoading: projectsLoading } = useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .order('updated_at', { ascending: false });
-      
-      if (error) {
-        toast({
-          title: 'Error fetching projects',
-          description: error.message,
-          variant: 'destructive',
-        });
-        throw error;
+      try {
+        const { data, error } = await supabase
+          .from('projects')
+          .select('*')
+          .order('updated_at', { ascending: false });
+        
+        if (error) {
+          toast({
+            title: 'Error fetching projects',
+            description: error.message,
+            variant: 'destructive',
+          });
+          throw error;
+        }
+        
+        return data as Project[] || [];
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+        return [];
       }
-      
-      return data as Project[] || [];
     },
   });
   
   const handleSelectFile = (file: FileItem) => {
     setSelectedFile(file);
-    // In a real app we would fetch file content from the database
-    if (file.content) {
-      setCodeContent(file.content);
-    }
+    setIsAnalyzing(true);
+    
+    // Simulate loading delay for analysis to show animation
+    setTimeout(() => {
+      if (file.content) {
+        setCodeContent(file.content);
+      }
+      setIsAnalyzing(false);
+    }, 800);
   };
 
+  const handleCodeChange = (newContent: string) => {
+    setCodeContent(newContent);
+    // In a real app we would save to Supabase here
+    toast({
+      title: 'Code updated',
+      description: 'Your changes have been saved',
+    });
+  };
+
+  // Real-time code editing functionality
+  useEffect(() => {
+    if (activeTab === 'view') {
+      // Update syntax highlighting when switching to view tab
+      Prism.highlightAll();
+    }
+  }, [activeTab, codeContent]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/40 dark:to-indigo-900/40 transition-colors duration-300">
       <div className="container mx-auto py-4 px-4">
         <Navbar />
         
         <div className="flex flex-col space-y-8">
           <div className="flex flex-col sm:flex-row gap-8">
             {/* Left Column - File Explorer */}
-            <div className="w-full sm:w-80">
-              <FileExplorer onSelectFile={handleSelectFile} />
+            <div className="w-full sm:w-80 animate-fade-in">
+              <MemoizedFileExplorer onSelectFile={handleSelectFile} />
             </div>
             
             {/* Right Column - Code View & Analysis */}
-            <div className="flex-1">
-              <CodeView 
+            <div className="flex-1 space-y-6">
+              <MemoizedCodeView 
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
                 fileName={selectedFile.name}
                 language="TypeScript"
                 content={codeContent}
+                onContentChange={handleCodeChange}
               />
               
-              <ComponentStructure isExpanded={true} />
-              <ReactPatterns />
-              <Recommendations />
+              {isAnalyzing ? (
+                <div className="glass-card p-8 flex items-center justify-center animate-pulse">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+                  <span className="ml-4 text-lg">Analyzing code structure...</span>
+                </div>
+              ) : (
+                <>
+                  <MemoizedComponentStructure isExpanded={true} />
+                  <MemoizedReactPatterns />
+                  <MemoizedRecommendations />
+                </>
+              )}
             </div>
           </div>
         </div>
