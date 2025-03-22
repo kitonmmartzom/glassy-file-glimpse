@@ -17,6 +17,15 @@ interface FileItem {
   content?: string;
 }
 
+interface Project {
+  id: string;
+  name: string;
+  description: string | null;
+  owner_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
 const Index = () => {
   const [activeTab, setActiveTab] = useState<'view' | 'edit'>('view');
   const [selectedFile, setSelectedFile] = useState<FileItem>({
@@ -29,9 +38,6 @@ const Index = () => {
     'export default function Page() {\n  return (\n    <div>\n      <h1>Hello World</h1>\n    </div>\n  );\n}'
   );
 
-  // We're temporarily disabling the projects query until we fix the types
-  // This prevents the build error while we work on a proper solution
-  /*
   const { data: projects, isLoading: projectsLoading } = useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
@@ -49,10 +55,9 @@ const Index = () => {
         throw error;
       }
       
-      return data || [];
+      return data as Project[] || [];
     },
   });
-  */
   
   const handleSelectFile = (file: FileItem) => {
     setSelectedFile(file);
