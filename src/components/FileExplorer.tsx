@@ -68,7 +68,11 @@ const FileExplorer: React.FC<FileExplorerProps> = ({ onSelectFile }) => {
       const isSelected = selectedFileId === item.id;
       
       return (
-        <div key={item.id} style={{ marginLeft: `${level * 12}px` }} className="animate-fade-in" style={{ animationDelay: `${level * 50}ms` }}>
+        <div 
+          key={item.id} 
+          className="animate-fade-in" 
+          style={{ marginLeft: `${level * 12}px`, animationDelay: `${level * 50}ms` }}
+        >
           <div 
             className={`file-item ${isSelected ? 'active' : ''}`}
             onClick={() => isFolder ? toggleFolder(item.id) : handleSelectFile(item)}
