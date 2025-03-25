@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, memo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +8,14 @@ import CodeView from '@/components/CodeView';
 import ComponentStructure from '@/components/ComponentStructure';
 import ReactPatterns from '@/components/ReactPatterns';
 import Recommendations from '@/components/Recommendations';
+import Prism from 'prismjs';
+import 'prismjs/themes/prism-tomorrow.css';
+import 'prismjs/components/prism-typescript';
+import 'prismjs/components/prism-javascript';
+import 'prismjs/components/prism-css';
+import 'prismjs/components/prism-markup';
+import 'prismjs/plugins/line-numbers/prism-line-numbers.js';
+import 'prismjs/plugins/line-numbers/prism-line-numbers.css';
 
 interface FileItem {
   id: string;
